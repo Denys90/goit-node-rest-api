@@ -48,7 +48,6 @@ export const createContact = async (req, res, next) => {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
-      favorite: req.body.favorite,
     };
 
     const existingContact = await Contact.findOne({ email: contact.email });
@@ -73,8 +72,15 @@ export const updateContact = async (req, res, next) => {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
-      favorite: req.body.favorite,
     };
+
+    const nonEmptyFields = Object.entries(changedContact).filter(
+      ([_, value]) => value !== null && value !== undefined
+    );
+
+    if (nonEmptyFields.length === 0) {
+      return res.status(400).json({ message: "Body must have at least one field" });
+    }
 
     const result = await Contact.findByIdAndUpdate(id, changedContact, { new: true });
 

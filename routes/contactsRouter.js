@@ -11,7 +11,11 @@ import {
 import validateBody from "../helpers/validateBody.js";
 import isValidId from "../helpers/isValidId.js";
 
-import { createContactSchema, updateContactSchema } from "../schemas/contactsSchemas.js";
+import {
+  createContactSchema,
+  updateContactSchema,
+  updateFavoriteSchema,
+} from "../schemas/contactsSchemas.js";
 
 const contactsRouter = express.Router();
 const jsonParser = express.json();
@@ -30,7 +34,7 @@ contactsRouter.patch(
   "/:id/favorite",
   jsonParser,
   isValidId,
-  validateBody(updateContactSchema),
+  validateBody(updateFavoriteSchema),
   updateFavoriteInContact
 );
 
