@@ -48,6 +48,7 @@ export const createContact = async (req, res, next) => {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
+      favorite: req.body.favorite,
     };
 
     const existingContact = await Contact.findOne({ email: contact.email });
@@ -72,6 +73,7 @@ export const updateContact = async (req, res, next) => {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
+      favorite: req.body.favorite,
     };
 
     const nonEmptyFields = Object.entries(changedContact).filter(
