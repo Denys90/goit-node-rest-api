@@ -2,8 +2,13 @@ import express from "express";
 
 import contactRoutes from "./contactsRouter.js";
 
-const router = express.Router();
+import authRoutes from "./authRoutes.js";
 
-router.use("/contacts", contactRoutes);
+import { auth } from "../Middlewares/auth.js";
 
-export default router;
+const routes = express.Router();
+
+routes.use("/contacts", auth, contactRoutes);
+routes.use("/users", authRoutes);
+
+export default routes;
