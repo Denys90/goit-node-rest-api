@@ -28,7 +28,7 @@ export const auth = async (req, res, next) => {
     const user = await Users.findById(decode.id);
 
     if (user.token !== token) {
-      return res.status(401).send({ message: "Invalid token" });
+      return res.status(401).send({ message: "Not authorized" });
     }
 
     req.user = {

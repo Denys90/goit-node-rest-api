@@ -7,25 +7,24 @@ import HttpError from "../helpers/HttpError.js";
 const { SECRET_KEY } = process.env;
 // -------------------------------------------------->
 export const register = async (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { email, password } = req.body;
 
   const normalizedEmail = email.toLowerCase();
 
   const user = await Users.findOne({ email: normalizedEmail });
 
   if (user !== null) {
-    return res.status(409).send({ message: "User already registered" });
+    return res.status(409).send({ message: "Email in use!" });
   }
 
   const hachPassword = await bcrypt.hash(password, 10);
 
-  await Users.create({
-    name,
+  const newUser = await Users.create({
     email: normalizedEmail,
     password: hachPassword,
   });
 
-  res.status(201).send({ message: "Registration successfully" });
+  res.status(201).send({ email, subscription: newUser.subscription });
   try {
   } catch (error) {
     next(error);
@@ -55,20 +54,59 @@ export const login = async (req, res, next) => {
 
     await Users.findByIdAndUpdate(user._id, { token });
 
-    res.send({ token });
+    res.status(200).send({ token, user: { subscription: user.subscription, email: user.email } });
   } catch (error) {
     next(error);
   }
 };
 // -------------------------------------------------->
 export const getCurrent = async (req, res, next) => {
-  const { name, email } = req.user;
-  res.send({ name, email });
+  const { _id } = req.user;
+  try {
+    const currentUser = await Users.findById(_id);
+
+    res.status(200).send({ email: currentUser.email, subscription: currentUser.subscription });
+  } catch (error) {
+    next(error);
+  }
 };
 // -------------------------------------------------->
 export const logout = async (req, res, next) => {
-  const { id } = req.user;
-  await Users.findbyIdAndUpdate(id, { token: null });
-  res.status(204).send({ message: "Logout success" });
+  const { _id } = req.user;
+
+  try {
+    await Users.findByIdAndUpdate(_id, { token: null });
+
+    res.status(204).send({ message: "No Content" });
+  } catch (error) {
+    next(error);
+  }
 };
 // -------------------------------------------------->
+
+export const updateSubscription = async (req, res, next) => {
+  const { _id } = req.user;
+
+  const subscription = req.body.subscription;
+
+  const possibleSubscriptions = ["starter", "pro", "business"];
+
+  if (!possibleSubscriptions.includes(subscription)) {
+    throw HttpError(404, "Invalid subscription value");
+  }
+
+  try {
+    const user = await Users.findById(_id);
+
+    if (!user) {
+      throw HttpError(404, "User not found");
+    }
+
+    user.subscription = subscription;
+    await user.save();
+
+    res.status(200).json({ id: user._id, subscription: user.subscription });
+  } catch (error) {
+    next(error);
+  }
+};

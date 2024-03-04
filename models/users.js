@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose from "mongoose";
 
 const usersSchema = mongoose.Schema({
   password: {
@@ -18,10 +18,6 @@ const usersSchema = mongoose.Schema({
   token: {
     type: String,
     default: null,
-  },
-  owner: {
-    type: Schema.Types.ObjectId,
-    ref: "user",
   },
 });
 
