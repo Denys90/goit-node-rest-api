@@ -24,7 +24,7 @@ export const register = async (req, res, next) => {
     password: hachPassword,
   });
 
-  res.status(201).send({ email, subscription: newUser.subscription });
+  res.status(201).send({ user: { email, subscription: newUser.subscription } });
   try {
   } catch (error) {
     next(error);

@@ -46,6 +46,10 @@ export const deleteContact = async (req, res, next) => {
   try {
     const result = await Contact.findByIdAndDelete(id);
 
+    if (result.owner.toString() !== req.user._id) {
+      throw HttpError(404, "Contact not found");
+    }
+
     if (!result) {
       throw HttpError(404, "Not found");
     }
