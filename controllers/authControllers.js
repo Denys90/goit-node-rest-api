@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+import gravatar from "gravatar";
+
 import Users from "../models/users.js";
 import HttpError from "../helpers/HttpError.js";
 
@@ -11,7 +13,14 @@ export const register = async (req, res, next) => {
 
   const normalizedEmail = email.toLowerCase();
 
-  const user = await Users.findOne({ email: normalizedEmail });
+  const options = {
+    size: 200,
+    rating: "pg",
+    default: "identicon",
+  };
+  const avatarURL = gravatar.url(normalizedEmail, options);
+
+  const user = await Users.findOne({ email: avatarURL });
 
   if (user !== null) {
     return res.status(409).send({ message: "Email in use!" });
@@ -22,6 +31,7 @@ export const register = async (req, res, next) => {
   const newUser = await Users.create({
     email: normalizedEmail,
     password: hachPassword,
+    avatarURL,
   });
 
   res.status(201).send({ user: { email, subscription: newUser.subscription } });

@@ -12,7 +12,7 @@ import { auth } from "../Middlewares/auth.js";
 
 import validateBody from "../helpers/validateBody.js";
 
-import { loginSchema, registerSchema, subscriptionSchema } from "../schemas/usersSchemas.js";
+import { loginSchema, registerSchema, subscriptionSchema } from "../schemas/authSchemas.js";
 
 const authRouter = express.Router();
 const jsonParser = express.json();
