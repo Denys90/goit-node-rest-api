@@ -3,28 +3,29 @@ import * as path from "node:path";
 
 import Users from "../models/users.js";
 import HttpError from "../helpers/HttpError.js";
+import { resizeImage } from "../utils/resizeImage.js";
+
+const AVATARS_DIR = path.join(process.cwd(), "public/avatars");
 // ================================================================>
+
 export const uploadAvatar = async (req, res, next) => {
-  const { _id } = req.user;
-
   try {
-    await fs.rename(req.file.path, path.join(process.swd(), "public/avatars", req.file.filename));
+    const newAvatarPath = path.join(AVATARS_DIR, req.file.filename);
 
-    const result = await Users.findByIdAndUpdate(
-      _id,
+    await fs.rename(req.file.path, newAvatarPath);
+    await resizeImage(newAvatarPath);
+
+    const user = await Users.findByIdAndUpdate(
+      req.user._id,
       { avatarURL: req.file.filename },
       { new: true }
     );
 
-    if (result.owner.toString() !== _id) {
-      throw HttpError(404, "User not found!");
+    if (user === null) {
+      throw HttpError(404, "User not found");
     }
 
-    if (result === null) {
-      throw HttpError(404, "User not found!");
-    }
-
-    res.send(result);
+    res.send({ avatarURL: `/${user.avatarURL}` });
   } catch (error) {
     next(error);
   }

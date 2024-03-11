@@ -1,10 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import gravatar from "gravatar";
-
 import Users from "../models/users.js";
 import HttpError from "../helpers/HttpError.js";
+import { generateAvatar } from "../utils/generateAvatar.js";
 
 const { SECRET_KEY } = process.env;
 // -------------------------------------------------->
@@ -13,29 +12,24 @@ export const register = async (req, res, next) => {
 
   const normalizedEmail = email.toLowerCase();
 
-  const options = {
-    size: 200,
-    rating: "pg",
-    default: "identicon",
-  };
-  const avatarURL = gravatar.url(normalizedEmail, options);
-
-  const user = await Users.findOne({ email: avatarURL });
-
-  if (user !== null) {
-    return res.status(409).send({ message: "Email in use!" });
-  }
-
-  const hachPassword = await bcrypt.hash(password, 10);
-
-  const newUser = await Users.create({
-    email: normalizedEmail,
-    password: hachPassword,
-    avatarURL,
-  });
-
-  res.status(201).send({ user: { email, subscription: newUser.subscription } });
   try {
+    const avatarPath = await generateAvatar(normalizedEmail);
+
+    const user = await Users.findOne({ email: normalizedEmail });
+
+    if (user !== null) {
+      return res.status(409).send({ message: "Email in use!" });
+    }
+
+    const hachPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await Users.create({
+      email: normalizedEmail,
+      password: hachPassword,
+      avatarURL: avatarPath,
+    });
+
+    res.status(201).send({ user: { email, subscription: newUser.subscription } });
   } catch (error) {
     next(error);
   }
@@ -120,3 +114,5 @@ export const updateSubscription = async (req, res, next) => {
     next(error);
   }
 };
+
+// -------------------------------------------------->
