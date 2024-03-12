@@ -10,6 +10,10 @@ const AVATARS_DIR = path.join(process.cwd(), "public/avatars");
 
 export const uploadAvatar = async (req, res, next) => {
   try {
+    if (!req.file) {
+      throw HttpError(400, "File is missing!");
+    }
+
     const newAvatarPath = path.join(AVATARS_DIR, req.file.filename);
 
     await fs.rename(req.file.path, newAvatarPath);
@@ -25,7 +29,7 @@ export const uploadAvatar = async (req, res, next) => {
       throw HttpError(404, "User not found");
     }
 
-    res.send({ avatarURL: `/${user.avatarURL}` });
+    res.send({ avatarURL: `/avatars/${user.avatarURL}` });
   } catch (error) {
     next(error);
   }
