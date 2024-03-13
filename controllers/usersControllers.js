@@ -3,6 +3,7 @@ import * as path from "node:path";
 
 import Users from "../models/users.js";
 import HttpError from "../helpers/HttpError.js";
+
 import { resizeImage } from "../utils/resizeImage.js";
 
 const AVATARS_DIR = path.join(process.cwd(), "public/avatars");
@@ -21,7 +22,7 @@ export const uploadAvatar = async (req, res, next) => {
 
     const user = await Users.findByIdAndUpdate(
       req.user._id,
-      { avatarURL: req.file.filename },
+      { avatarURL: `/avatars/${req.file.filename}` },
       { new: true }
     );
 
@@ -29,11 +30,12 @@ export const uploadAvatar = async (req, res, next) => {
       throw HttpError(404, "User not found");
     }
 
-    res.send({ avatarURL: `/avatars/${user.avatarURL}` });
+    res.send({ avatarURL: user.avatarURL });
   } catch (error) {
     next(error);
   }
 };
+
 // ================================================================>
 export const getAvatar = async (req, res, next) => {
   const { _id } = req.user;
