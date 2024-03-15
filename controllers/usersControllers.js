@@ -20,11 +20,9 @@ export const uploadAvatar = async (req, res, next) => {
     await fs.rename(req.file.path, newAvatarPath);
     await resizeImage(newAvatarPath);
 
-    const user = await Users.findByIdAndUpdate(
-      req.user._id,
-      { avatarURL: `/avatars/${req.file.filename}` },
-      { new: true }
-    );
+    const avatarURL = path.join("/avatars", req.file.filename);
+
+    const user = await Users.findByIdAndUpdate(req.user._id, { avatarURL }, { new: true });
 
     if (user === null) {
       throw HttpError(404, "User not found");
