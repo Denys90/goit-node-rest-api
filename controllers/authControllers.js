@@ -1,11 +1,26 @@
+import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 import Users from "../models/users.js";
 import HttpError from "../helpers/HttpError.js";
-import { generateAvatar } from "../utils/generateAvatar.js";
+import generateAvatar from "../utils/generateAvatar.js";
 
 const { SECRET_KEY } = process.env;
+const { MAILTRAP_USER } = process.env;
+const { MAILTRAP_PASSWORD } = process.env;
+
+const transporter = nodemailer.createTransport({
+  host: "sandbox.smtp.mailtrap.io",
+  port: 2525,
+
+  auth: {
+    user: MAILTRAP_USER,
+    pass: MAILTRAP_PASSWORD,
+  },
+});
+
 // -------------------------------------------------->
 export const register = async (req, res, next) => {
   const { email, password } = req.body;
@@ -18,12 +33,22 @@ export const register = async (req, res, next) => {
     const user = await Users.findOne({ email: normalizedEmail });
 
     if (user !== null) {
-      return res.status(409).send({ message: "Email in use!" });
+      throw HttpError(409, "Email in use!");
     }
 
     const hachPassword = await bcrypt.hash(password, 10);
+    const verificationToken = crypto.randomUUID();
+
+    await transporter.sendMail({
+      to: email,
+      from: "DM__90@gmail.com",
+      subject: "Welcome to FindContacts",
+      html: `To confirm your registration please click on the <a href="http://localhost:3000/api/users/verify/${verificationToken}">link</a>`,
+      text: `To confirm you registration please open the link http://localhost:3000/api/users/verify/${verificationToken}`,
+    });
 
     const newUser = await Users.create({
+      verificationToken,
       email: normalizedEmail,
       password: hachPassword,
       avatarURL: avatarPath,
@@ -53,6 +78,10 @@ export const login = async (req, res, next) => {
     const payload = {
       id: user._id,
     };
+
+    if (user.verify === false) {
+      throw HttpError(401, "Your account is not verified");
+    }
 
     const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "23h" });
 
@@ -114,5 +143,58 @@ export const updateSubscription = async (req, res, next) => {
     next(error);
   }
 };
-
 // -------------------------------------------------->
+export const verifyUser = async (req, res, next) => {
+  const { verificationToken } = req.params;
+
+  try {
+    const user = await Users.findOne({ verificationToken });
+
+    if (user === null) {
+      throw HttpError(404, "User not found");
+    }
+
+    await Users.findByIdAndUpdate(user._id, { verify: true, verificationToken: null });
+
+    res.send({ message: "Verification successful" });
+  } catch (error) {
+    next(error);
+  }
+};
+// -------------------------------------------------->
+
+export const resendVerificationEmail = async (req, res, next) => {
+  const { email } = req.body;
+
+  try {
+    if (!email) {
+      throw HttpError(400, "Missing required field email");
+    }
+
+    const normalizedEmail = email.toLowerCase();
+
+    const user = await Users.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      throw HttpError(404, "User not found");
+    }
+
+    if (user.verify) {
+      throw HttpError(400, "Verification has already been passed");
+    }
+
+    const verificationToken = crypto.randomUUID();
+
+    await transporter.sendMail({
+      to: email,
+      from: "DM__90@gmail.com",
+      subject: "Welcome to FindContacts",
+      html: `To confirm your registration please click on the <a href="http://localhost:3000/api/users/verify/${verificationToken}">link</a>`,
+      text: `To confirm you registration please open the link http://localhost:3000/api/users/verify/${verificationToken}`,
+    });
+
+    res.status(200).send({ message: "Verification email sent" });
+  } catch (error) {
+    next(error);
+  }
+};

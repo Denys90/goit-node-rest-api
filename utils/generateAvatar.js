@@ -2,7 +2,7 @@ import gravatar from "gravatar";
 import Jimp from "jimp";
 import path from "node:path";
 
-export const generateAvatar = async (email) => {
+const generateAvatar = async (email) => {
   const options = {
     size: 250,
     rating: "pg",
@@ -22,3 +22,5 @@ export const generateAvatar = async (email) => {
 
   return httpsAvatarURL;
 };
+
+export default generateAvatar;

@@ -13,3 +13,7 @@ export const loginSchema = Joi.object({
 export const subscriptionSchema = Joi.object({
   subscription: Joi.string().required(),
 });
+
+export const verifyEmailSchema = Joi.object({
+  email: Joi.string().email().required(),
+});
